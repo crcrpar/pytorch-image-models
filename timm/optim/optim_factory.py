@@ -16,6 +16,7 @@ from .adafactor import Adafactor
 from .adahessian import Adahessian
 from .adamp import AdamP
 from .lamb import Lamb
+from .mt_lamb import MtLamb
 from .lars import Lars
 from .lookahead import Lookahead
 from .madgrad import MADGRAD
@@ -255,7 +256,7 @@ def create_optimizer_v2(
 
     # adaptive
     elif opt_lower == 'adam':
-        optimizer = optim.Adam(parameters, **opt_args) 
+        optimizer = optim.Adam(parameters, **opt_args)
     elif opt_lower == 'adamw':
         optimizer = optim.AdamW(parameters, **opt_args)
     elif opt_lower == 'adamp':
@@ -283,6 +284,8 @@ def create_optimizer_v2(
         optimizer = Adafactor(parameters, **opt_args)
     elif opt_lower == 'lamb':
         optimizer = Lamb(parameters, **opt_args)
+    elif opt_lower == 'mt_lamb':
+        optimizer = MtLamb(parameters, **opt_args)
     elif opt_lower == 'lambc':
         optimizer = Lamb(parameters, trust_clip=True, **opt_args)
     elif opt_lower == 'larc':

@@ -37,29 +37,15 @@ from timm.optim import create_optimizer_v2, optimizer_kwargs
 from timm.scheduler import create_scheduler
 from timm.utils import ApexScaler, NativeScaler
 
-try:
-    from apex import amp
-    from apex.parallel import DistributedDataParallel as ApexDDP
-    from apex.parallel import convert_syncbn_model
-    has_apex = True
-except ImportError:
-    has_apex = False
 
-has_native_amp = False
-try:
-    if getattr(torch.cuda.amp, 'autocast') is not None:
-        has_native_amp = True
-except AttributeError:
-    pass
-
-try:
-    import wandb
-    has_wandb = True
-except ImportError: 
-    has_wandb = False
+has_apex = True
+has_native_amp = getattr(torch.cuda.amp, 'autocast', False)
+assert has_native_amp
+has_wandb = False
 
 torch.backends.cudnn.benchmark = True
 _logger = logging.getLogger('train')
+
 
 # The first arg parser parses out only the --config argument, this argument is used to
 # load a yaml file containing key-values that override the defaults for the main parser below
@@ -68,7 +54,7 @@ parser.add_argument('-c', '--config', default='', type=str, metavar='FILE',
                     help='YAML config file specifying default arguments')
 
 
-parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
+parser = argparse.ArgumentParser(description='PyTorch ImageNet Training', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 # Dataset parameters
 parser.add_argument('data_dir', metavar='DIR',
@@ -125,7 +111,7 @@ parser.add_argument('--grad-checkpointing', action='store_true', default=False,
                     help='Enable gradient checkpointing through model blocks/stages')
 
 # Optimizer parameters
-parser.add_argument('--opt', default='sgd', type=str, metavar='OPTIMIZER',
+parser.add_argument('--opt', default='lamb', type=str, metavar='OPTIMIZER',
                     help='Optimizer (default: "sgd"')
 parser.add_argument('--opt-eps', default=None, type=float, metavar='EPSILON',
                     help='Optimizer Epsilon (default: None, use opt default)')
@@ -324,14 +310,14 @@ def _parse_args():
 def main():
     setup_default_logging()
     args, args_text = _parse_args()
-    
+
     if args.log_wandb:
         if has_wandb:
             wandb.init(project=args.experiment, config=args)
-        else: 
+        else:
             _logger.warning("You've requested to log metrics to wandb but package not found. "
                             "Metrics not being logged to wandb, try `pip install wandb`")
-             
+
     args.prefetcher = not args.no_prefetcher
     args.distributed = False
     if 'WORLD_SIZE' in os.environ:

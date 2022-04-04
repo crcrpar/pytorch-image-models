@@ -4,6 +4,7 @@ from .adahessian import Adahessian
 from .adamp import AdamP
 from .adamw import AdamW
 from .lamb import Lamb
+from .mt_lamb import MtLamb
 from .lars import Lars
 from .lookahead import Lookahead
 from .madgrad import MADGRAD
